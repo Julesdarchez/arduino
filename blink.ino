@@ -22,19 +22,29 @@
   This example code is in the public domain.
 
   http://www.arduino.cc/en/Tutorial/Blink
-*/
-/* 
- * Code d'exemple pour un capteur à ultrasons HC-SR04.
- */
 
 /* Constantes pour les broches */
-const byte TRIGGER_PIN = 2; // Broche TRIGGER
-const byte ECHO_PIN = 3;    // Broche ECHO
- 
+const byte TRIGGER_DROITE = 2; // Broche TRIGGER DROITE
+const byte ECHO_DROITE = 3;    // Broche ECHO DROITE
+const byte TRIGGER_AVANT = 4;  // Broche TRIGGER AVANT
+const byte ECHO_AVANT = 5;     // Broche ECHO AVANT
+const byte TRIGGER_GAUCHE = 7; // Broche TRIGGER GAUCHE
+const byte ECHO_GAUCHE = 6;    // Broche ECHO GAUCHE
+
+/* Moteur A */
+int ENA=9;  //Connecté à Arduino pin 9(sortie pwm)
+int IN1=8;  //Connecté à Arduino pin 8
+int IN2=12; //Connecté à Arduino pin 12
+
+/* Moteur B */
+int ENB=10;  //Connecté à Arduino pin 10(Sortie pwm)
+int IN3=11;  //Connecté à Arduino pin 11
+int IN4=13;  //Connecté à Arduino pin 13
+
 /* Constantes pour le timeout */
 const unsigned long MEASURE_TIMEOUT = 25000UL; // 25ms = ~8m à 340m/s
 
-/* Vitesse du son dans l'air en mm/us */
+/* Vitesse du son dans l'air en mm/s */
 const float SOUND_SPEED = 340.0 / 1000;
 
 /** Fonction setup() */
@@ -42,36 +52,84 @@ void setup() {
    
   /* Initialise le port série */
   Serial.begin(115200);
+ 
    
   /* Initialise les broches */
-  pinMode(TRIGGER_PIN, OUTPUT);
-  digitalWrite(TRIGGER_PIN, LOW); // La broche TRIGGER doit être à LOW au repos
-  pinMode(ECHO_PIN, INPUT);
-}
+  pinMode(TRIGGER_DROITE, OUTPUT);
+  digitalWrite(TRIGGER_DROITE, LOW);
+  pinMode(ECHO_DROITE, INPUT);
+  pinMode(TRIGGER_AVANT, OUTPUT);
+  digitalWrite(TRIGGER_AVANT, LOW);
+  pinMode(ECHO_AVANT, INPUT);
+  pinMode(TRIGGER_GAUCHE, OUTPUT);
+  digitalWrite(TRIGGER_GAUCHE, LOW);
+  pinMode(ECHO_GAUCHE, INPUT);
  
+  pinMode(ENA,OUTPUT);
+  pinMode(ENB,OUTPUT);
+  pinMode(IN1,OUTPUT);
+  pinMode(IN2,OUTPUT);
+  pinMode(IN3,OUTPUT);
+  pinMode(IN4,OUTPUT);
+  digitalWrite(ENA,HIGH);// Moteur A - Ne pas tourner (désactivation moteur)
+  digitalWrite(ENB,HIGH);// Moteur B - Ne pas tourner (désactivation moteur)
+ 
+ /* Direction du Moteur A */
+ digitalWrite(IN1,LOW);
+ digitalWrite(IN2,HIGH);
+ 
+ /* Direction du Moteur B */
+ digitalWrite(IN3,LOW);
+ digitalWrite(IN4,HIGH);
+}
+
 /** Fonction loop() */
 void loop() {
   
-  /* 1. Lance une mesure de distance en envoyant une impulsion HIGH de 10µs sur la broche TRIGGER */
-  digitalWrite(TRIGGER_PIN, HIGH);
+ /* 1. Lance une mesure de distance en envoyant une impulsion HIGH de 10µs sur la broche TRIGGER */
+  digitalWrite(TRIGGER_DROITE, HIGH);
+  digitalWrite(TRIGGER_AVANT, HIGH);
+  digitalWrite(TRIGGER_GAUCHE, HIGH);
   delayMicroseconds(10);
-  digitalWrite(TRIGGER_PIN, LOW);
-  
+  digitalWrite(TRIGGER_DROITE, LOW);
+  digitalWrite(TRIGGER_AVANT, LOW);
+  digitalWrite(TRIGGER_GAUCHE, LOW);
+
+ 
   /* 2. Mesure le temps entre l'envoi de l'impulsion ultrasonique et son écho (si il existe) */
-  long measure = pulseIn(ECHO_PIN, HIGH, MEASURE_TIMEOUT);
-   
+  long mesure_droite = pulseIn(ECHO_DROITE, HIGH, MEASURE_TIMEOUT);
+  long mesure_avant = pulseIn(ECHO_AVANT, HIGH, MEASURE_TIMEOUT);
+  long mesure_gauche = pulseIn(ECHO_GAUCHE, HIGH, MEASURE_TIMEOUT);
+
+ 
   /* 3. Calcul la distance à partir du temps mesuré */
-  float distance_mm = measure / 2.0 * SOUND_SPEED;
-   
-  /* Affiche les résultats en mm, cm et m */
-  Serial.print(F("Distance: "));
-  Serial.print(distance_mm);
-  Serial.print(F("mm ("));
-  Serial.print(distance_mm / 10.0, 2);
-  Serial.print(F("cm, "));
-  Serial.print(distance_mm / 1000.0, 2);
-  Serial.println(F("m)"));
-   
-  /* Délai d'attente pour éviter d'afficher trop de résultats à la seconde */
-  delay(500);
+  float distance_droite = mesure_droite / 2.0 * SOUND_SPEED;
+  float distance_avant = mesure_avant / 2.0 * SOUND_SPEED;
+  float distance_gauche = mesure_gauche / 2.0 * SOUND_SPEED;
+
+  /* 4. Contrôle des moteurs */
+  analogWrite(ENA,128);
+  analogWrite(ENB,128);
+  if (distance_avant <= 300);
+  {
+    if (distance_droite <= 20);
+    {
+       analogWrite(ENB,255);
+       delay(1500);
+       analogWrite(ENB,128);
+    }
+    if (distance_gauche <= 20);
+    {
+      analogWrite(ENA,255);
+      delay(1500);
+      analogWrite(ENA,128);
+    }
+    if (distance_gauche <= 20 && distance_droite <=20);
+    {
+      analogWrite(ENA,0);
+      analogWrite(ENB,0);
+    }
+      }
+  delay(300);
+
 }
